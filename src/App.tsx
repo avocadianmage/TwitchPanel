@@ -19,20 +19,22 @@ const getPromisedTimeout = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const App = () => {
     const [followedStreams, setFollowedStreams] = useState<Stream[]>([]);
 
-    const pollFollowedStreams = async () => {
+    const pollFollowedStreams = async (isFirstPoll: boolean) => {
         const streamInfos = await Twitch.GetFollowedStreams();
         setFollowedStreams((prev) => {
-            return streamInfos.map((si) => ({
+            return streamInfos.map((si, index) => ({
                 ...si,
-                selected: prev.find((prevSI) => prevSI.user_id === si.user_id)?.selected ?? false,
+                selected:
+                    (index === 0 && isFirstPoll) || // On first poll select first stream by default 
+                    (prev.find((prevSI) => prevSI.user_id === si.user_id)?.selected ?? false),
             }));
         });
-        getPromisedTimeout(PollIntervalMs).then(pollFollowedStreams);
+        getPromisedTimeout(PollIntervalMs).then(() => pollFollowedStreams(false));
     };
 
     useEffect(() => {
         Twitch.Authenticate();
-        pollFollowedStreams();
+        pollFollowedStreams(true);
     }, []);
 
     return (
