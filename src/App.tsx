@@ -13,18 +13,26 @@ const darkTheme = createTheme({
     },
 });
 
+const PollIntervalMs = 30000;
+const getPromisedTimeout = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 const App = () => {
     const [followedStreams, setFollowedStreams] = useState<Stream[]>([]);
 
-    const loadFollowedStreams = async () => {
+    const pollFollowedStreams = async () => {
         const streamInfos = await Twitch.GetFollowedStreams();
-        const streams = streamInfos.map((si) => ({ ...si, selected: false }));
-        setFollowedStreams(streams);
+        setFollowedStreams((prev) => {
+            return streamInfos.map((si) => ({
+                ...si,
+                selected: prev.find((prevSI) => prevSI.user_id === si.user_id)?.selected ?? false,
+            }));
+        });
+        getPromisedTimeout(PollIntervalMs).then(pollFollowedStreams);
     };
 
     useEffect(() => {
         Twitch.Authenticate();
-        loadFollowedStreams();
+        pollFollowedStreams();
     }, []);
 
     return (
