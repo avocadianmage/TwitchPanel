@@ -1,5 +1,3 @@
-import { SetStateAction } from 'react';
-import * as Twitch from '../services/twitch';
 import {
     Avatar,
     Box,
@@ -13,18 +11,16 @@ import {
 } from '@mui/material';
 import { purple, red } from '@mui/material/colors';
 import { Circle } from '@mui/icons-material';
-
-export interface Stream extends Twitch.StreamAndUserInfo {
-    selected: boolean;
-}
+import { StreamAndUserInfo } from '../services/twitch';
 
 export interface StreamListProps {
-    followedStreams: Stream[];
-    setFollowedStreams(value: SetStateAction<Stream[]>): void;
+    followedStreams: StreamAndUserInfo[];
+    selectedStreams: StreamAndUserInfo[];
+    toggleStreamSelect(stream: StreamAndUserInfo): void;
 }
 
 export const StreamList = (props: StreamListProps) => {
-    const { followedStreams, setFollowedStreams } = props;
+    const { followedStreams, selectedStreams, toggleStreamSelect } = props;
     return (
         <List
             subheader={
@@ -34,21 +30,15 @@ export const StreamList = (props: StreamListProps) => {
             }
         >
             {followedStreams.map((stream) => {
-                const { user_name, game_name, title, viewer_count, userInfo, selected } = stream;
-
-                const handleSelectToggle = () => {
-                    setFollowedStreams((prev) =>
-                        prev.map((s) =>
-                            s.user_name === user_name ? { ...s, selected: !selected } : s
-                        )
-                    );
-                };
+                const { user_name, game_name, title, viewer_count, userInfo } = stream;
+                const selected = !!selectedStreams.find((ss) => ss.user_name === user_name);
                 const AvatarSize = 32;
+
                 return (
                     <ListItem key={user_name} disablePadding>
                         <ListItemButton
                             selected={selected}
-                            onClick={handleSelectToggle}
+                            onClick={() => toggleStreamSelect(stream)}
                             sx={{ paddingTop: '5px', paddingBottom: '5px' }}
                         >
                             <ListItemAvatar

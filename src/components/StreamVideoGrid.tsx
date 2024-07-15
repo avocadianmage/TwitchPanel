@@ -1,8 +1,7 @@
 import { useRef } from 'react';
-import * as Twitch from '../services/twitch';
-import { StreamListProps } from './StreamList';
 import { useRect } from '../hooks/useRect';
 import { Box } from '@mui/material';
+import { AspectRatio, GetStreamVideoSrc, StreamAndUserInfo } from '../services/twitch';
 
 interface PlayerProps {
     channelName: string;
@@ -15,7 +14,7 @@ interface PlayerProps {
 
 const StreamPlayer = (props: PlayerProps) => {
     const { channelName, initialMutedState, width, height, left, top } = props;
-    const src = Twitch.GetStreamVideoSrc(channelName, initialMutedState);
+    const src = GetStreamVideoSrc(channelName, initialMutedState);
     return (
         <iframe
             src={src}
@@ -27,16 +26,19 @@ const StreamPlayer = (props: PlayerProps) => {
     );
 };
 
-export const StreamVideoGrid = (props: StreamListProps) => {
-    const { followedStreams } = props;
-    const selectedStreams = followedStreams.filter((s) => s.selected);
+export interface StreamVideoGridProps {
+    selectedStreams: StreamAndUserInfo[];
+}
+
+export const StreamVideoGrid = (props: StreamVideoGridProps) => {
+    const { selectedStreams } = props;
 
     const divRef = useRef<HTMLDivElement>(null);
     const { width, height } = useRect(divRef);
 
     // Create video layout grid, optimizing for size of each video player.
     const streamCount = selectedStreams.length;
-    const aspectRatio = Twitch.AspectRatio;
+    const aspectRatio = AspectRatio;
 
     let bestGridX = 0;
     let bestGridY = 0;
