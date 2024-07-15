@@ -1,32 +1,10 @@
 import { useRef } from 'react';
 import { useRect } from '../hooks/useRect';
 import { Box } from '@mui/material';
-import { AspectRatio, GetStreamVideoSrc, StreamAndUserInfo } from '../services/twitch';
+import { AspectRatio, StreamAndUserInfo } from '../services/twitch';
+import { StreamPlayer } from './StreamPlayer';
 
-interface PlayerProps {
-    channelName: string;
-    initialMutedState: boolean;
-    width: number;
-    height: number;
-    left: number;
-    top: number;
-}
-
-const StreamPlayer = (props: PlayerProps) => {
-    const { channelName, initialMutedState, width, height, left, top } = props;
-    const src = GetStreamVideoSrc(channelName, initialMutedState);
-    return (
-        <iframe
-            src={src}
-            style={{ position: 'absolute', left, top, border: 'none' }}
-            width={width}
-            height={height}
-            allowFullScreen
-        />
-    );
-};
-
-export interface StreamVideoGridProps {
+interface StreamVideoGridProps {
     selectedStreams: StreamAndUserInfo[];
 }
 
