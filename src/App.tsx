@@ -42,7 +42,13 @@ const App = () => {
         const streamInfos = await GetFollowedStreams();
         setFollowedStreams(streamInfos);
         if (isFirstPoll && streamInfos.length > 0) {
+            // Add select first stream if the page just loaded in.
             setSelectedStreams([streamInfos[0]]);
+        } else {
+            // Unselect all streams that have gone offline.
+            setSelectedStreams((prev) =>
+                prev.filter((p) => !!streamInfos.find((si) => si.user_name === p.user_name))
+            );
         }
 
         getPromisedTimeout(PollIntervalMs).then(() => pollFollowedStreams(false));
