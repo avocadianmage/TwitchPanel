@@ -79,7 +79,7 @@ export const Authenticate = () => {
     const oAuthUrl = buildUrl('https://id.twitch.tv/oauth2/authorize', [
         { key: 'response_type', value: 'token' },
         { key: 'client_id', value: client_id },
-        { key: 'redirect_uri', value: window.location.origin },
+        { key: 'redirect_uri', value: window.location.href },
         { key: 'scope', value: encodeURIComponent('user:read:follows') },
     ]);
     window.location.replace(oAuthUrl);
