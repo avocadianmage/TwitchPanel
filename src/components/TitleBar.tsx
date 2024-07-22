@@ -11,6 +11,7 @@ export interface TitleBarProps {
 export const TitleBar = (props: TitleBarProps) => {
     const { collapsed, onCollapseToggle } = props;
     const leftRightPadding = collapsed ? CollapsedLeftRightPadding : ExpandedLeftRightPadding;
+    
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar position='static'>
