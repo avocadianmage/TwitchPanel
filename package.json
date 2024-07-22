@@ -7,6 +7,7 @@
         "type": "git",
         "url": "https://github.com/avocadianmage/TwitchPanel.git"
     },
+    "funding": "https://www.paypal.com/donate/?hosted_button_id=L5LXYLNEUR26E",
     "type": "module",
     "scripts": {
         "dev": "vite",

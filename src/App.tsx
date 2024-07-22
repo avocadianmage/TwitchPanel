@@ -39,19 +39,23 @@ const App = () => {
     const pollFollowedStreams = async (isFirstPoll: boolean) => {
         console.log('[' + new Date().toLocaleString() + '] Polling Twitch for followed streams.');
 
-        const streamInfos = await GetFollowedStreams();
-        setFollowedStreams(streamInfos);
-        if (isFirstPoll && streamInfos.length > 0) {
-            // Add select first stream if the page just loaded in.
-            setSelectedStreams([streamInfos[0]]);
-        } else {
-            // Unselect all streams that have gone offline.
-            setSelectedStreams((prev) =>
-                prev.filter((p) => !!streamInfos.find((si) => si.user_name === p.user_name))
-            );
+        try {
+            const streamInfos = await GetFollowedStreams();
+            setFollowedStreams(streamInfos);
+            if (isFirstPoll && streamInfos.length > 0) {
+                // Add select first stream if the page just loaded in.
+                setSelectedStreams([streamInfos[0]]);
+            } else {
+                // Unselect all streams that have gone offline.
+                setSelectedStreams((prev) =>
+                    prev.filter((p) => !!streamInfos.find((si) => si.user_name === p.user_name))
+                );
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            getPromisedTimeout(PollIntervalMs).then(() => pollFollowedStreams(false));
         }
-
-        getPromisedTimeout(PollIntervalMs).then(() => pollFollowedStreams(false));
     };
 
     useEffect(() => {
