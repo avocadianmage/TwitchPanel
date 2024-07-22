@@ -3,7 +3,6 @@ import { Box, createTheme, CssBaseline, Paper, ThemeProvider } from '@mui/materi
 import { StreamList } from './components/StreamList';
 import { StreamVideoGrid } from './components/StreamVideoGrid';
 import { Authenticate, GetFollowedStreams, StreamAndUserInfo } from './services/twitch';
-import { TitleBar } from './components/TitleBar';
 
 const darkTheme = createTheme({
     palette: {
@@ -82,9 +81,8 @@ const App = () => {
             <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
                 <Paper
                     elevation={1}
-                    sx={{ minWidth: '360px', width: '360px', overflowY: 'auto', borderRadius: 0 }}
+                    sx={{ maxWidth: '360px', overflowY: 'auto', borderRadius: 0 }}
                 >
-                    <TitleBar />
                     <StreamList
                         followedStreams={followedStreams}
                         selectedStreams={selectedStreams}
