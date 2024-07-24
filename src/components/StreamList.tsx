@@ -7,6 +7,7 @@ import {
     ListItemButton,
     ListItemText,
     ListSubheader,
+    Paper,
     Typography,
 } from '@mui/material';
 import { purple, red } from '@mui/material/colors';
@@ -21,8 +22,10 @@ export interface StreamListProps {
     toggleStreamSelect(stream: StreamAndUserInfo): void;
 }
 
+export const TitleBarHeight = '64px';
 export const CollapsedLeftRightPadding = '5px';
 export const ExpandedLeftRightPadding = '16px';
+const AvatarSize = '36px';
 
 export const StreamList = (props: StreamListProps) => {
     const [collapsed, setCollapsed] = useState<boolean>(false);
@@ -33,11 +36,12 @@ export const StreamList = (props: StreamListProps) => {
 
     const { followedStreams, selectedStreams, toggleStreamSelect } = props;
     const leftRightPadding = collapsed ? CollapsedLeftRightPadding : ExpandedLeftRightPadding;
-    
+
     return (
-        <>
+        <Paper elevation={1} sx={{ maxWidth: '360px', height: '100vh', overflow: 'hidden' }}>
             <TitleBar collapsed={collapsed} onCollapseToggle={onCollapseToggle} />
             <List
+                sx={{ overflowY: 'auto', height: `calc(100vh - ${TitleBarHeight})` }}
                 subheader={
                     <ListSubheader
                         sx={{
@@ -53,7 +57,6 @@ export const StreamList = (props: StreamListProps) => {
                 {followedStreams.map((stream) => {
                     const { user_name, game_name, title, viewer_count, userInfo } = stream;
                     const selected = !!selectedStreams.find((ss) => ss.user_name === user_name);
-                    const AvatarSize = 36;
 
                     return (
                         <ListItem key={user_name} disablePadding>
@@ -62,7 +65,7 @@ export const StreamList = (props: StreamListProps) => {
                                 onClick={() => toggleStreamSelect(stream)}
                                 sx={{ padding: `5px ${leftRightPadding}` }}
                             >
-                                <ListItemAvatar sx={{ minWidth: AvatarSize + 'px' }}>
+                                <ListItemAvatar sx={{ minWidth: AvatarSize }}>
                                     <Avatar
                                         src={userInfo.profile_image_url}
                                         sx={{ width: AvatarSize, height: AvatarSize }}
@@ -112,6 +115,6 @@ export const StreamList = (props: StreamListProps) => {
                     );
                 })}
             </List>
-        </>
+        </Paper>
     );
 };

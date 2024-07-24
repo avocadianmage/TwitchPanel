@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, createTheme, CssBaseline, Paper, ThemeProvider } from '@mui/material';
+import { Box, createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import { StreamList } from './components/StreamList';
 import { StreamVideoGrid } from './components/StreamVideoGrid';
 import { Authenticate, GetFollowedStreams, StreamAndUserInfo } from './services/twitch';
@@ -78,17 +78,12 @@ const App = () => {
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
-            <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-                <Paper
-                    elevation={1}
-                    sx={{ maxWidth: '360px', overflowY: 'auto', borderRadius: 0 }}
-                >
-                    <StreamList
-                        followedStreams={followedStreams}
-                        selectedStreams={selectedStreams}
-                        toggleStreamSelect={toggleStreamSelect}
-                    />
-                </Paper>
+            <Box sx={{ display: 'flex' }}>
+                <StreamList
+                    followedStreams={followedStreams}
+                    selectedStreams={selectedStreams}
+                    toggleStreamSelect={toggleStreamSelect}
+                />
                 <StreamVideoGrid selectedStreams={selectedStreams} />
             </Box>
         </ThemeProvider>
