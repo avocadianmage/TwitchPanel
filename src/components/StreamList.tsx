@@ -10,7 +10,7 @@ import {
     Paper,
     Typography,
 } from '@mui/material';
-import { purple, red } from '@mui/material/colors';
+import { green, purple, red } from '@mui/material/colors';
 import { Circle } from '@mui/icons-material';
 import { StreamAndUserInfo } from '../services/twitch';
 import { TitleBar } from './TitleBar';
@@ -41,11 +41,18 @@ export const StreamList = (props: StreamListProps) => {
         <Paper elevation={1} sx={{ maxWidth: '360px', height: '100vh', overflow: 'hidden' }}>
             <TitleBar collapsed={collapsed} onCollapseToggle={onCollapseToggle} />
             <List
-                sx={{ overflowY: 'auto', height: `calc(100vh - ${TitleBarHeight})` }}
+                sx={{
+                    overflowY: 'auto',
+                    height: `calc(100vh - ${TitleBarHeight})`,
+                    // Selected and selected+hover states:
+                    '&& .Mui-selected, && .Mui-selected:hover': {
+                        bgcolor: purple[900],
+                    },
+                }}
                 subheader={
                     <ListSubheader
                         sx={{
-                            bgcolor: purple[900],
+                            bgcolor: green[900],
                             p: `12px ${leftRightPadding}`,
                             lineHeight: 1.5,
                         }}
