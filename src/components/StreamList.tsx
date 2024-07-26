@@ -8,6 +8,7 @@ import {
     ListItemText,
     ListSubheader,
     Paper,
+    Tooltip,
     Typography,
 } from '@mui/material';
 import { green, purple, red } from '@mui/material/colors';
@@ -64,60 +65,71 @@ export const StreamList = (props: StreamListProps) => {
                 {followedStreams.map((stream) => {
                     const { user_name, game_name, title, viewer_count, userInfo } = stream;
                     const selected = !!selectedStreams.find((ss) => ss.user_name === user_name);
+                    const formattedViewerCount = viewer_count.toLocaleString(undefined, {
+                        useGrouping: true,
+                    });
 
                     return (
                         <ListItem key={user_name} disablePadding>
-                            <ListItemButton
-                                selected={selected}
-                                onClick={() => toggleStreamSelect(stream)}
-                                sx={{ padding: `5px ${leftRightPadding}` }}
+                            <Tooltip
+                                title={user_name}
+                                placement='right'
+                                arrow
+                                disableInteractive
+                                disableHoverListener={!collapsed}
+                                disableFocusListener={!collapsed}
+                                disableTouchListener={!collapsed}
                             >
-                                <ListItemAvatar sx={{ minWidth: AvatarSize }}>
-                                    <Avatar
-                                        src={userInfo.profile_image_url}
-                                        sx={{ width: AvatarSize, height: AvatarSize }}
-                                        variant='rounded'
-                                    />
-                                </ListItemAvatar>
-                                {!collapsed && (
-                                    <ListItemText
-                                        sx={{ paddingLeft: ExpandedLeftRightPadding }}
-                                        primary={
-                                            <>
-                                                {user_name}
-                                                <Box component='span' color={red[300]}>
-                                                    <Circle sx={{ fontSize: 10 }} />
-                                                    &nbsp;
-                                                    <Typography component='span'>
-                                                        {viewer_count.toLocaleString(undefined, {
-                                                            useGrouping: true,
-                                                        })}
+                                <ListItemButton
+                                    selected={selected}
+                                    onClick={() => toggleStreamSelect(stream)}
+                                    sx={{ padding: `5px ${leftRightPadding}` }}
+                                >
+                                    <ListItemAvatar sx={{ minWidth: AvatarSize }}>
+                                        <Avatar
+                                            src={userInfo.profile_image_url}
+                                            sx={{ width: AvatarSize, height: AvatarSize }}
+                                            variant='rounded'
+                                        />
+                                    </ListItemAvatar>
+                                    {!collapsed && (
+                                        <ListItemText
+                                            sx={{ paddingLeft: ExpandedLeftRightPadding }}
+                                            primary={
+                                                <>
+                                                    {user_name}
+                                                    <Box component='span' color={red[300]}>
+                                                        <Circle sx={{ fontSize: 10 }} />
+                                                        &nbsp;
+                                                        <Typography component='span'>
+                                                            {formattedViewerCount}
+                                                        </Typography>
+                                                    </Box>
+                                                </>
+                                            }
+                                            primaryTypographyProps={{
+                                                sx: {
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                },
+                                            }}
+                                            secondary={
+                                                <>
+                                                    {game_name}
+                                                    &nbsp;—&nbsp;
+                                                    <Typography
+                                                        component='span'
+                                                        variant='body2'
+                                                        color='text.primary'
+                                                    >
+                                                        {title}
                                                     </Typography>
-                                                </Box>
-                                            </>
-                                        }
-                                        primaryTypographyProps={{
-                                            sx: {
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                            },
-                                        }}
-                                        secondary={
-                                            <>
-                                                {game_name}
-                                                &nbsp;—&nbsp;
-                                                <Typography
-                                                    component='span'
-                                                    variant='body2'
-                                                    color='text.primary'
-                                                >
-                                                    {title}
-                                                </Typography>
-                                            </>
-                                        }
-                                    />
-                                )}
-                            </ListItemButton>
+                                                </>
+                                            }
+                                        />
+                                    )}
+                                </ListItemButton>
+                            </Tooltip>
                         </ListItem>
                     );
                 })}
