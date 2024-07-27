@@ -46,8 +46,6 @@ const App = () => {
     };
 
     const pollFollowedStreams = async (isFirstPoll: boolean) => {
-        console.log('[' + new Date().toLocaleString() + '] Polling Twitch for followed streams.');
-
         try {
             const streamInfos = await GetFollowedStreams();
             setFollowedStreams(streamInfos);
