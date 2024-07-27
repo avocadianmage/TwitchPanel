@@ -31,11 +31,6 @@ const App = () => {
     const [followedStreams, setFollowedStreams] = useState<StreamAndUserInfo[]>([]);
     const [selectedStreams, setSelectedStreams] = useState<StreamAndUserInfo[]>([]);
 
-    useEffect(() => {
-        // Hide address bar on mobile.
-        window.scrollTo(1, 0);
-    }, []);
-
     const toggleStreamSelect = (stream: StreamAndUserInfo) => {
         setSelectedStreams((prev) => {
             const next = [...prev];
