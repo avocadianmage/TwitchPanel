@@ -15,7 +15,7 @@ export const StreamPlayer = (props: PlayerProps) => {
     return (
         <iframe
             src={src}
-            style={{ position: 'absolute', left, top, border: 'none' }}
+            style={{ position: 'absolute', left, top }}
             width={width}
             height={height}
             allowFullScreen

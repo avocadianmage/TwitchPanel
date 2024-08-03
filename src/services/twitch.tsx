@@ -19,7 +19,7 @@ export interface StreamAndUserInfo extends StreamInfo {
 
 interface QueryParam {
     key: string;
-    value: string | number;
+    value: string | number | boolean;
 }
 
 /**
@@ -40,7 +40,10 @@ const getAccessToken = () => {
 const buildUrl = (base: string, params: QueryParam[]) => {
     let url = base + '?';
     for (let param of params) {
-        url += param.key + '=' + param.value + '&';
+        if (param.key === '') continue;
+        url += param.key;
+        if (param.value !== '') url += '=' + param.value;
+        url += '&';
     }
     return url.slice(0, -1);
 };
@@ -102,7 +105,7 @@ export const GetFollowedStreams = async (): Promise<StreamAndUserInfo[]> => {
         const streamAndUserInfos: StreamAndUserInfo[] = getFollowedChannelsResponseData.map(
             (s) => ({
                 ...s,
-                userInfo: getUsersResponseData.find(u => u.id === s.user_id)!,
+                userInfo: getUsersResponseData.find((u) => u.id === s.user_id)!,
             })
         );
 
@@ -112,7 +115,19 @@ export const GetFollowedStreams = async (): Promise<StreamAndUserInfo[]> => {
     return ret;
 };
 
+const getEmbeddingParentDomain = () => window.location.hostname;
+
 export const GetStreamVideoSrc = (name: string, muted: boolean) => {
-    const parent = window.location.hostname;
-    return `https://player.twitch.tv/?channel=${name}&parent=${parent}&muted=${muted}`;
+    return buildUrl('https://player.twitch.tv/', [
+        { key: 'channel', value: name },
+        { key: 'parent', value: getEmbeddingParentDomain() },
+        { key: 'muted', value: muted },
+    ]);
+};
+
+export const GetStreamChatSrc = (name: string, darkMode: boolean) => {
+    return buildUrl(`https://twitch.tv/embed/${name}/chat`, [
+        { key: 'parent', value: getEmbeddingParentDomain() },
+        { key: darkMode ? 'darkpopout' : '', value: '' },
+    ]);
 };
