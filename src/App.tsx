@@ -53,6 +53,8 @@ const App = () => {
     const toggleStreamChat = (stream: StreamAndUserInfo) => {
         setStreamChat((prev) => (prev?.user_id !== stream.user_id ? stream : undefined));
     };
+    
+    const closeStreamChat = () => setStreamChat(undefined);
 
     const pollFollowedStreams = async (isFirstPoll: boolean) => {
         try {
@@ -97,7 +99,9 @@ const App = () => {
                     toggleStreamChat={toggleStreamChat}
                 />
                 <StreamVideoGrid selectedStreams={selectedStreams} />
-                {streamChat && <StreamChat stream={streamChat.user_name} />}
+                {streamChat && (
+                    <StreamChat stream={streamChat.user_name} onClose={closeStreamChat} />
+                )}
             </Box>
         </ThemeProvider>
     );
