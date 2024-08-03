@@ -75,13 +75,53 @@ export const StreamList = (props: StreamListProps) => {
                 {followedStreams.map((stream) => {
                     const { user_id, user_name, game_name, title, viewer_count, userInfo } = stream;
                     const selected = !!selectedStreams.find((ss) => ss.user_name === user_name);
-                    const formattedViewerCount = viewer_count.toLocaleString(undefined, {
-                        useGrouping: true,
-                    });
 
                     const handleChatClick = (e: MouseEvent<HTMLButtonElement>) => {
                         toggleStreamChat(stream);
                         if (selected) e.stopPropagation();
+                    };
+
+                    const StreamEntryHeader = () => {
+                        const formattedViewerCount = viewer_count.toLocaleString(undefined, {
+                            useGrouping: true,
+                        });
+                        return (
+                            <>
+                                {user_name}
+                                <Box component='span' color={red[300]}>
+                                    <Circle sx={{ fontSize: 10 }} />
+                                    &nbsp;
+                                    <Typography component='span'>{formattedViewerCount}</Typography>
+                                </Box>
+                            </>
+                        );
+                    };
+
+                    const StreamEntryDescription = () => {
+                        return (
+                            <>
+                                <Box component='span'>
+                                    {game_name}
+                                    &nbsp;—&nbsp;
+                                    <Typography
+                                        component='span'
+                                        variant='body2'
+                                        color='text.primary'
+                                    >
+                                        {title}
+                                    </Typography>
+                                </Box>
+                                <Box component='span'>
+                                    <IconButton onClick={handleChatClick}>
+                                        {streamChat?.user_id === user_id ? (
+                                            <ChatBubble />
+                                        ) : (
+                                            <ChatBubbleOutline />
+                                        )}
+                                    </IconButton>
+                                </Box>
+                            </>
+                        );
                     };
 
                     return (
@@ -110,43 +150,9 @@ export const StreamList = (props: StreamListProps) => {
                                     {!collapsed && (
                                         <ListItemText
                                             sx={{ paddingLeft: ExpandedLeftRightPadding }}
-                                            primary={
-                                                <>
-                                                    {user_name}
-                                                    <Box component='span' color={red[300]}>
-                                                        <Circle sx={{ fontSize: 10 }} />
-                                                        &nbsp;
-                                                        <Typography component='span'>
-                                                            {formattedViewerCount}
-                                                        </Typography>
-                                                    </Box>
-                                                </>
-                                            }
+                                            primary={<StreamEntryHeader />}
                                             primaryTypographyProps={{ sx: JustifySpaceBetweenSx }}
-                                            secondary={
-                                                <>
-                                                    <Box component='span'>
-                                                        {game_name}
-                                                        &nbsp;—&nbsp;
-                                                        <Typography
-                                                            component='span'
-                                                            variant='body2'
-                                                            color='text.primary'
-                                                        >
-                                                            {title}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box component='span'>
-                                                        <IconButton onClick={handleChatClick}>
-                                                            {streamChat?.user_id === user_id ? (
-                                                                <ChatBubble />
-                                                            ) : (
-                                                                <ChatBubbleOutline />
-                                                            )}
-                                                        </IconButton>
-                                                    </Box>
-                                                </>
-                                            }
+                                            secondary={<StreamEntryDescription />}
                                             secondaryTypographyProps={{ sx: JustifySpaceBetweenSx }}
                                         />
                                     )}
