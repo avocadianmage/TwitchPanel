@@ -19,6 +19,7 @@ import { StreamAndUserInfo } from '../services/twitch';
 import { TitleBar } from './TitleBar';
 import { MouseEvent, useState } from 'react';
 import { Theme } from '@emotion/react';
+import { IsMobileDevice } from '../services/utilities';
 
 export interface StreamListProps {
     followedStreams: StreamAndUserInfo[];
@@ -38,7 +39,7 @@ const JustifySpaceBetweenSx: SxProps<Theme> = {
 };
 
 export const StreamList = (props: StreamListProps) => {
-    const [collapsed, setCollapsed] = useState<boolean>(false);
+    const [collapsed, setCollapsed] = useState<boolean>(IsMobileDevice);
 
     const onCollapseToggle = () => {
         setCollapsed((prev) => !prev);
@@ -47,6 +48,92 @@ export const StreamList = (props: StreamListProps) => {
     const { followedStreams, selectedStreams, streamChat, toggleStreamSelect, toggleStreamChat } =
         props;
     const leftRightPadding = collapsed ? CollapsedLeftRightPadding : ExpandedLeftRightPadding;
+
+    const StreamEntry = (stream: StreamAndUserInfo) => {
+        const { user_id, user_name, game_name, title, viewer_count, userInfo } = stream;
+        const selected = !!selectedStreams.find((ss) => ss.user_name === user_name);
+
+        const handleChatClick = (e: MouseEvent<HTMLButtonElement>) => {
+            toggleStreamChat(stream);
+            if (selected) e.stopPropagation();
+        };
+
+        const StreamEntryHeader = () => {
+            const formattedViewerCount = viewer_count.toLocaleString(undefined, {
+                useGrouping: true,
+            });
+            return (
+                <>
+                    {user_name}
+                    <Box component='span' color={red[300]}>
+                        <Circle sx={{ fontSize: 10 }} />
+                        &nbsp;
+                        <Typography component='span'>{formattedViewerCount}</Typography>
+                    </Box>
+                </>
+            );
+        };
+
+        const StreamEntryDescription = () => {
+            return (
+                <>
+                    <Box component='span'>
+                        {game_name}
+                        &nbsp;—&nbsp;
+                        <Typography component='span' variant='body2' color='text.primary'>
+                            {title}
+                        </Typography>
+                    </Box>
+                    <Box component='span'>
+                        <IconButton onClick={handleChatClick}>
+                            {streamChat?.user_id === user_id ? (
+                                <ChatBubble />
+                            ) : (
+                                <ChatBubbleOutline />
+                            )}
+                        </IconButton>
+                    </Box>
+                </>
+            );
+        };
+
+        return (
+            <ListItem key={user_name} disablePadding>
+                <Tooltip
+                    title={user_name}
+                    placement='right'
+                    arrow
+                    disableInteractive
+                    disableHoverListener={!collapsed}
+                    disableFocusListener={!collapsed}
+                    disableTouchListener={!collapsed}
+                >
+                    <ListItemButton
+                        selected={selected}
+                        onClick={() => toggleStreamSelect(stream)}
+                        sx={{ padding: `5px ${leftRightPadding}` }}
+                    >
+                        <ListItemAvatar sx={{ minWidth: AvatarSize }}>
+                            <Avatar
+                                src={userInfo.profile_image_url}
+                                sx={{ width: AvatarSize, height: AvatarSize }}
+                                variant='rounded'
+                            />
+                        </ListItemAvatar>
+                        {!collapsed && (
+                            <ListItemText
+                                sx={{ paddingLeft: ExpandedLeftRightPadding }}
+                                primary={<StreamEntryHeader />}
+                                primaryTypographyProps={{ sx: JustifySpaceBetweenSx }}
+                                secondary={<StreamEntryDescription />}
+                                secondaryTypographyProps={{ sx: JustifySpaceBetweenSx }}
+                            />
+                        )}
+                    </ListItemButton>
+                </Tooltip>
+            </ListItem>
+        );
+    };
 
     return (
         <Paper elevation={1} sx={{ maxWidth: '360px', height: '100vh', overflow: 'hidden' }}>
@@ -72,95 +159,7 @@ export const StreamList = (props: StreamListProps) => {
                     </ListSubheader>
                 }
             >
-                {followedStreams.map((stream) => {
-                    const { user_id, user_name, game_name, title, viewer_count, userInfo } = stream;
-                    const selected = !!selectedStreams.find((ss) => ss.user_name === user_name);
-
-                    const handleChatClick = (e: MouseEvent<HTMLButtonElement>) => {
-                        toggleStreamChat(stream);
-                        if (selected) e.stopPropagation();
-                    };
-
-                    const StreamEntryHeader = () => {
-                        const formattedViewerCount = viewer_count.toLocaleString(undefined, {
-                            useGrouping: true,
-                        });
-                        return (
-                            <>
-                                {user_name}
-                                <Box component='span' color={red[300]}>
-                                    <Circle sx={{ fontSize: 10 }} />
-                                    &nbsp;
-                                    <Typography component='span'>{formattedViewerCount}</Typography>
-                                </Box>
-                            </>
-                        );
-                    };
-
-                    const StreamEntryDescription = () => {
-                        return (
-                            <>
-                                <Box component='span'>
-                                    {game_name}
-                                    &nbsp;—&nbsp;
-                                    <Typography
-                                        component='span'
-                                        variant='body2'
-                                        color='text.primary'
-                                    >
-                                        {title}
-                                    </Typography>
-                                </Box>
-                                <Box component='span'>
-                                    <IconButton onClick={handleChatClick}>
-                                        {streamChat?.user_id === user_id ? (
-                                            <ChatBubble />
-                                        ) : (
-                                            <ChatBubbleOutline />
-                                        )}
-                                    </IconButton>
-                                </Box>
-                            </>
-                        );
-                    };
-
-                    return (
-                        <ListItem key={user_name} disablePadding>
-                            <Tooltip
-                                title={user_name}
-                                placement='right'
-                                arrow
-                                disableInteractive
-                                disableHoverListener={!collapsed}
-                                disableFocusListener={!collapsed}
-                                disableTouchListener={!collapsed}
-                            >
-                                <ListItemButton
-                                    selected={selected}
-                                    onClick={() => toggleStreamSelect(stream)}
-                                    sx={{ padding: `5px ${leftRightPadding}` }}
-                                >
-                                    <ListItemAvatar sx={{ minWidth: AvatarSize }}>
-                                        <Avatar
-                                            src={userInfo.profile_image_url}
-                                            sx={{ width: AvatarSize, height: AvatarSize }}
-                                            variant='rounded'
-                                        />
-                                    </ListItemAvatar>
-                                    {!collapsed && (
-                                        <ListItemText
-                                            sx={{ paddingLeft: ExpandedLeftRightPadding }}
-                                            primary={<StreamEntryHeader />}
-                                            primaryTypographyProps={{ sx: JustifySpaceBetweenSx }}
-                                            secondary={<StreamEntryDescription />}
-                                            secondaryTypographyProps={{ sx: JustifySpaceBetweenSx }}
-                                        />
-                                    )}
-                                </ListItemButton>
-                            </Tooltip>
-                        </ListItem>
-                    );
-                })}
+                {followedStreams.map(StreamEntry)}
             </List>
         </Paper>
     );

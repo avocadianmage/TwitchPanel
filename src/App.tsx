@@ -4,6 +4,7 @@ import { StreamList } from './components/StreamList';
 import { StreamVideoGrid } from './components/StreamVideoGrid';
 import { Authenticate, GetFollowedStreams, StreamAndUserInfo } from './services/twitch';
 import { StreamChat } from './components/StreamChat';
+import { GetPromisedTimeout, IsMobileDevice } from './services/utilities';
 
 const darkTheme = createTheme({
     palette: {
@@ -24,8 +25,6 @@ const darkTheme = createTheme({
 });
 
 const PollIntervalMs = 30000;
-const getPromisedTimeout = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 let IsPollingStarted = false;
 
 const App = () => {
@@ -42,7 +41,7 @@ const App = () => {
                 // Deselect stream from viewing.
                 next.splice(selectedStreamIndex, 1);
                 // If it was on, turn off this stream's chat.
-                setStreamChat(prev => prev?.user_id !== stream.user_id ? prev : undefined);
+                setStreamChat((prev) => (prev?.user_id !== stream.user_id ? prev : undefined));
             } else {
                 // Select stream for viewing.
                 next.push(stream);
@@ -52,7 +51,7 @@ const App = () => {
     };
 
     const toggleStreamChat = (stream: StreamAndUserInfo) => {
-        setStreamChat(prev => prev?.user_id !== stream.user_id ? stream : undefined);
+        setStreamChat((prev) => (prev?.user_id !== stream.user_id ? stream : undefined));
     };
 
     const pollFollowedStreams = async (isFirstPoll: boolean) => {
@@ -60,8 +59,10 @@ const App = () => {
             const streamInfos = await GetFollowedStreams();
             setFollowedStreams(streamInfos);
             if (isFirstPoll && streamInfos.length > 0) {
-                // Add select first stream if the page just loaded in.
-                setSelectedStreams([streamInfos[0]]);
+                // If the page just loaded in: Select first stream, open chat if desktop device.
+                const firstStream = streamInfos[0];
+                setSelectedStreams([firstStream]);
+                if (!IsMobileDevice) setStreamChat(firstStream);
             } else {
                 // Unselect all streams that have gone offline.
                 setSelectedStreams((prev) =>
@@ -71,7 +72,7 @@ const App = () => {
         } catch (error) {
             console.error(error);
         } finally {
-            getPromisedTimeout(PollIntervalMs).then(() => pollFollowedStreams(false));
+            GetPromisedTimeout(PollIntervalMs).then(() => pollFollowedStreams(false));
         }
     };
 
