@@ -20,6 +20,7 @@ import { TitleBar } from './TitleBar';
 import { MouseEvent, useState } from 'react';
 import { Theme } from '@emotion/react';
 import { IsMobileDevice } from '../services/utilities';
+import { StorageModule } from '../services/storage';
 
 export interface StreamListProps {
     followedStreams: StreamAndUserInfo[];
@@ -39,10 +40,15 @@ const JustifySpaceBetweenSx: SxProps<Theme> = {
 };
 
 export const StreamList = (props: StreamListProps) => {
-    const [collapsed, setCollapsed] = useState<boolean>(IsMobileDevice);
+    const defaultCollapsedValue = StorageModule.GetStreamListCollapsed() ?? IsMobileDevice;
+    const [collapsed, setCollapsed] = useState<boolean>(defaultCollapsedValue);
 
     const onCollapseToggle = () => {
-        setCollapsed((prev) => !prev);
+        setCollapsed((prev) => {
+            const value = !prev;
+            StorageModule.SetStreamListCollapsed(value);
+            return value;
+        });
     };
 
     const { followedStreams, selectedStreams, streamChat, toggleStreamSelect, toggleStreamChat } =
