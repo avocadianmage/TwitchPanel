@@ -83,7 +83,7 @@ export const StreamList = (props: StreamListProps) => {
         const StreamEntryDescription = () => {
             return (
                 <>
-                    <Box component='span'>
+                    <Box component='span' sx={{ overflowX: 'hidden' }}>
                         {game_name}
                         &nbsp;—&nbsp;
                         <Typography component='span' variant='body2' color='text.primary'>
