@@ -26,7 +26,7 @@ interface QueryParam {
  * Authentication details
  */
 
-const client_id = 'o25y5kprgg00jyivazdkgu8ex0ugem';
+const client_id = 'ko2dweidblciqum63bel4ae0axtpav';
 
 const getAccessToken = () => {
     const oAuthResponse = document.location.hash;
