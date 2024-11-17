@@ -57,6 +57,10 @@ const invokeTwitchApi = async (api: string, params: QueryParam[]) => {
             'Client-Id': client_id,
         }),
     });
+
+    // If Unauthorized response, renew authentication to generate a new access token.
+    if (response.status === 401) Authenticate(true);
+
     return response.json();
 };
 
@@ -75,14 +79,22 @@ const getLoggedInUserInfo = async (): Promise<UserInfo> => {
  * Public APIs
  */
 
-export const Authenticate = () => {
-    // Quit if already authenticated.
-    if (getAccessToken()) return;
+export const Authenticate = (renew: boolean = false) => {
+
+    // Quit if already authenticated and not attempting to renew authentication.
+    if (!renew && getAccessToken()) return;
+
+    // The redirect_uri must match exactly (including trailing slash) or Twitch will reject the 
+    // request. However, it should not include the location hash to avoid passing forward any stale
+    // access tokens persisting when in the process of renewing authentication. This is why 
+    // window.location.href is not used.
+    const appendIfNeeded = (s: string, append: string) => s.endsWith(append) ? s : s + append;
+    const redirect_uri = appendIfNeeded(window.location.origin, '/');
 
     const oAuthUrl = buildUrl('https://id.twitch.tv/oauth2/authorize', [
         { key: 'response_type', value: 'token' },
         { key: 'client_id', value: client_id },
-        { key: 'redirect_uri', value: window.location.href },
+        { key: 'redirect_uri', value: redirect_uri },
         { key: 'scope', value: encodeURIComponent('user:read:follows') },
     ]);
     window.location.replace(oAuthUrl);
