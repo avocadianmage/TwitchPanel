@@ -125,7 +125,12 @@ const App = () => {
 
     return (
         <ThemeProvider theme={darkTheme}>
-            <GlobalStyles styles={{ iframe: { border: 'none' } }} />
+            <GlobalStyles styles={{ 
+                iframe: { border: 'none' },
+                // Ensure Twitch player nested elements fill their containers
+                '[id^="twitch-player-"]': { width: '100%', height: '100%' },
+                '[id^="twitch-player-"] iframe': { width: '100%', height: '100%' },
+            }} />
             <CssBaseline />
             <Box sx={{ display: 'flex' }}>
                 <StreamList
