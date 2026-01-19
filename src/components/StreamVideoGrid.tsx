@@ -39,7 +39,7 @@ export const StreamVideoGrid = (props: StreamVideoGridProps) => {
     const bestVideoHeight = bestVideoWidth / aspectRatio;
 
     return (
-        <Box sx={{ flex: '1 0', position: 'relative' }} ref={divRef}>
+        <Box sx={{ flex: '1 0', position: 'relative', background: '#0a0a0a' }} ref={divRef}>
             {selectedStreams.map((s, i) => {
                 return (
                     <StreamPlayer
