@@ -138,7 +138,7 @@ export const GetStreamVideoSrc = (name: string, muted: boolean) => {
 };
 
 export const GetStreamChatSrc = (name: string, darkMode: boolean) => {
-    return buildUrl(`https://twitch.tv/embed/${name}/chat`, [
+    return buildUrl(`https://www.twitch.tv/embed/${name}/chat`, [
         { key: 'parent', value: getEmbeddingParentDomain() },
         { key: darkMode ? 'darkpopout' : '', value: '' },
     ]);
