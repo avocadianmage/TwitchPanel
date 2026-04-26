@@ -50,7 +50,7 @@ export const StreamVideoGrid = (props: StreamVideoGridProps) => {
         // Minimum thumb height (px) for visibility. Small so the spotlight wins as much
         // of the area as possible; thumbs only grow above this when the grid actually
         // has the empty space to give.
-        const minThumbH = 50;
+        const minThumbH = 200;
 
         let thumbW: number;
         let thumbH: number;
