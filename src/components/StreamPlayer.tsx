@@ -37,12 +37,14 @@ const ControlButton = (props: ControlButtonProps) => {
                     cursor: 'pointer',
                     background: 'rgba(0, 0, 0, 0.75)',
                     color: 'white',
-                    padding: '8px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative',
+                    flexShrink: 0,
                     '&:hover': { background: 'rgba(0, 0, 0, 0.9)' },
                 }}
             >
