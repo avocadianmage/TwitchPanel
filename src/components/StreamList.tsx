@@ -1,7 +1,6 @@
 import {
     Avatar,
     Box,
-    IconButton,
     List,
     ListItem,
     ListItemAvatar,
@@ -14,10 +13,10 @@ import {
     Typography,
 } from '@mui/material';
 import { green, purple, red } from '@mui/material/colors';
-import { ChatBubble, ChatBubbleOutline, Circle } from '@mui/icons-material';
+import { Circle } from '@mui/icons-material';
 import { StreamAndUserInfo } from '../services/twitch';
 import { TitleBar } from './TitleBar';
-import { MouseEvent, useState } from 'react';
+import { useState } from 'react';
 import { Theme } from '@emotion/react';
 import { IsMobileDevice } from '../services/utilities';
 import { StorageModule } from '../services/storage';
@@ -25,9 +24,7 @@ import { StorageModule } from '../services/storage';
 export interface StreamListProps {
     followedStreams: StreamAndUserInfo[];
     selectedStreams: StreamAndUserInfo[];
-    streamChat?: StreamAndUserInfo;
     toggleStreamSelect(stream: StreamAndUserInfo): void;
-    toggleStreamChat(stream: StreamAndUserInfo): void;
 }
 
 export const TitleBarHeight = '64px';
@@ -51,18 +48,12 @@ export const StreamList = (props: StreamListProps) => {
         });
     };
 
-    const { followedStreams, selectedStreams, streamChat, toggleStreamSelect, toggleStreamChat } =
-        props;
+    const { followedStreams, selectedStreams, toggleStreamSelect } = props;
     const leftRightPadding = collapsed ? CollapsedLeftRightPadding : ExpandedLeftRightPadding;
 
     const StreamEntry = (stream: StreamAndUserInfo) => {
-        const { user_id, user_name, game_name, title, viewer_count, userInfo } = stream;
+        const { user_name, game_name, title, viewer_count, userInfo } = stream;
         const selected = !!selectedStreams.find((ss) => ss.user_name === user_name);
-
-        const handleChatClick = (e: MouseEvent<HTMLButtonElement>) => {
-            toggleStreamChat(stream);
-            if (selected) e.stopPropagation();
-        };
 
         const StreamEntryHeader = () => {
             const formattedViewerCount = viewer_count.toLocaleString(undefined, {
@@ -82,24 +73,13 @@ export const StreamList = (props: StreamListProps) => {
 
         const StreamEntryDescription = () => {
             return (
-                <>
-                    <Box component='span' sx={{ overflowX: 'hidden' }}>
-                        {game_name}
-                        &nbsp;—&nbsp;
-                        <Typography component='span' variant='body2' color='text.primary'>
-                            {title}
-                        </Typography>
-                    </Box>
-                    <Box component='span'>
-                        <IconButton onClick={handleChatClick}>
-                            {streamChat?.user_id === user_id ? (
-                                <ChatBubble />
-                            ) : (
-                                <ChatBubbleOutline />
-                            )}
-                        </IconButton>
-                    </Box>
-                </>
+                <Box component='span' sx={{ overflowX: 'hidden' }}>
+                    {game_name}
+                    &nbsp;—&nbsp;
+                    <Typography component='span' variant='body2' color='text.primary'>
+                        {title}
+                    </Typography>
+                </Box>
             );
         };
 
