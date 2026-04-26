@@ -30,7 +30,6 @@ export const StreamVideoGrid = (props: StreamVideoGridProps) => {
         ? selectedStreams.find((s) => s.user_id === spotlightStreamId)
         : undefined;
     const useSpotlight = !!spotlightStream && canSpotlight;
-    const spotlightActive = useSpotlight;
 
     // Compute layout per stream by user_id so we can render in a stable order.
     // Stable render order is critical: reordering iframes in the DOM causes them to reload
@@ -150,7 +149,7 @@ export const StreamVideoGrid = (props: StreamVideoGridProps) => {
                         left={layout.left}
                         top={layout.top}
                         isSpotlit={useSpotlight && s.user_id === spotlightStreamId}
-                        spotlightActive={spotlightActive}
+                        spotlightActive={useSpotlight}
                         canSpotlight={canSpotlight}
                         onToggleSpotlight={() => toggleStreamSpotlight(s)}
                     />

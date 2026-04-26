@@ -1,4 +1,6 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
+import { grey } from '@mui/material/colors';
+import { Highlight } from '@mui/icons-material';
 import { GetStreamVideoSrc } from '../services/twitch';
 
 interface PlayerProps {
@@ -29,11 +31,11 @@ export const StreamPlayer = (props: PlayerProps) => {
     } = props;
     const src = GetStreamVideoSrc(channelName, initialMutedState);
 
-    const overlayText = isSpotlit
-        ? 'Turn off Spotlight mode'
-        : !spotlightActive
-        ? 'Turn on Spotlight mode'
-        : 'Switch Spotlight';
+    const tooltipText = isSpotlit
+        ? 'Turn off Spotlight'
+        : spotlightActive
+        ? 'Switch Spotlight'
+        : 'Turn on Spotlight';
 
     return (
         <Box
@@ -64,25 +66,51 @@ export const StreamPlayer = (props: PlayerProps) => {
                         pointerEvents: 'none',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        justifyContent: 'flex-start',
+                        paddingLeft: '16px',
                     }}
                 >
-                    <Typography
-                        onClick={onToggleSpotlight}
-                        sx={{
-                            pointerEvents: 'auto',
-                            cursor: 'pointer',
-                            background: 'rgba(0, 0, 0, 0.75)',
-                            color: 'white',
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            fontWeight: 500,
-                            userSelect: 'none',
-                            '&:hover': { background: 'rgba(0, 0, 0, 0.9)' },
-                        }}
-                    >
-                        {overlayText}
-                    </Typography>
+                    <Tooltip title={tooltipText} arrow disableInteractive>
+                        <Box
+                            onClick={onToggleSpotlight}
+                            sx={{
+                                pointerEvents: 'auto',
+                                cursor: 'pointer',
+                                background: 'rgba(0, 0, 0, 0.75)',
+                                color: 'white',
+                                padding: '12px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                                '&:hover': { background: 'rgba(0, 0, 0, 0.9)' },
+                            }}
+                        >
+                            <Highlight
+                                sx={{
+                                    fontSize: 32,
+                                    transform: 'rotate(135deg)',
+                                    color: isSpotlit ? grey[500] : undefined,
+                                }}
+                            />
+                            {isSpotlit && (
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '12%',
+                                        right: '12%',
+                                        height: '3px',
+                                        background: 'currentColor',
+                                        borderRadius: '2px',
+                                        transform: 'translateY(-50%) rotate(-45deg)',
+                                        pointerEvents: 'none',
+                                    }}
+                                />
+                            )}
+                        </Box>
+                    </Tooltip>
                 </Box>
             )}
         </Box>
