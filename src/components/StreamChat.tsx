@@ -8,7 +8,7 @@ export const StreamChat = (props: { stream: string; onClose(): void }) => {
             <iframe src={GetStreamChatSrc(props.stream, true)} width='340' height='100%' />
             <IconButton
                 onClick={props.onClose}
-                sx={{ position: 'absolute', left: '6px', top: '6px' }}
+                sx={{ position: 'absolute', left: '6px', top: '6px', padding: '4px' }}
             >
                 <Clear />
             </IconButton>

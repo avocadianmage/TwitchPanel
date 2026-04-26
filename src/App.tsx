@@ -37,6 +37,7 @@ const App = () => {
     const [followedStreams, setFollowedStreams] = useState<StreamAndUserInfo[]>([]);
     const [selectedStreams, setSelectedStreams] = useState<StreamAndUserInfo[]>([]);
     const [streamChat, setStreamChat] = useState<StreamAndUserInfo>();
+    const [spotlightStreamId, setSpotlightStreamId] = useState<string | undefined>();
 
     const toggleStreamSelect = (stream: StreamAndUserInfo) => {
         setSelectedStreams((prev) => {
@@ -50,6 +51,12 @@ const App = () => {
                 setStreamChat((prev) => {
                     const value = prev?.user_id !== stream.user_id ? prev : undefined;
                     StorageModule.SetStreamChat(value);
+                    return value;
+                });
+                // If it was the spotlit stream, turn off spotlight.
+                setSpotlightStreamId((prev) => {
+                    const value = prev !== stream.user_id ? prev : undefined;
+                    StorageModule.SetSpotlightStreamId(value);
                     return value;
                 });
             } else {
@@ -73,6 +80,14 @@ const App = () => {
     const updateStreamChat = (stream: StreamAndUserInfo | undefined) => {
         setStreamChat(stream);
         StorageModule.SetStreamChat(stream);
+    };
+
+    const toggleStreamSpotlight = (stream: StreamAndUserInfo) => {
+        setSpotlightStreamId((prev) => {
+            const value = prev === stream.user_id ? undefined : stream.user_id;
+            StorageModule.SetSpotlightStreamId(value);
+            return value;
+        });
     };
 
     const pollFollowedStreams = async (isFirstPoll: boolean) => {
@@ -100,11 +115,30 @@ const App = () => {
                         : [];
                 updateStreamChat(onlineStreamChat.length > 0 ? onlineStreamChat[0] : undefined);
 
+                // Try to restore spotlight from last time, if its stream is still selected
+                // and there are at least 2 selected streams (spotlight is meaningless otherwise).
+                const storedSpotlightId = StorageModule.GetSpotlightStreamId();
+                const validSpotlight =
+                    storedSpotlightId !== undefined &&
+                    streamsToSelect.length >= 2 &&
+                    streamsToSelect.some((s) => s.user_id === storedSpotlightId);
+                const spotlightToSet = validSpotlight ? storedSpotlightId : undefined;
+                setSpotlightStreamId(spotlightToSet);
+                StorageModule.SetSpotlightStreamId(spotlightToSet);
+
             } else {
                 // Unselect all streams that have gone offline.
                 setSelectedStreams((prev) => {
                     const value = filterOfflineStreams(prev, latestFollowedStreams);
                     StorageModule.SetSelectedStreams(value);
+                    // If the spotlit stream went offline, clear spotlight.
+                    setSpotlightStreamId((spotPrev) => {
+                        if (spotPrev === undefined) return spotPrev;
+                        const stillSelected = value.some((s) => s.user_id === spotPrev);
+                        if (stillSelected) return spotPrev;
+                        StorageModule.SetSpotlightStreamId(undefined);
+                        return undefined;
+                    });
                     return value;
                 });
             }
@@ -135,7 +169,11 @@ const App = () => {
                     toggleStreamSelect={toggleStreamSelect}
                     toggleStreamChat={toggleStreamChat}
                 />
-                <StreamVideoGrid selectedStreams={selectedStreams} />
+                <StreamVideoGrid
+                    selectedStreams={selectedStreams}
+                    spotlightStreamId={spotlightStreamId}
+                    toggleStreamSpotlight={toggleStreamSpotlight}
+                />
                 {streamChat && (
                     <StreamChat
                         stream={streamChat.user_name}

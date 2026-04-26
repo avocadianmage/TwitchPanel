@@ -3,6 +3,7 @@ import { StreamAndUserInfo } from './twitch';
 const StreamListCollapsedKey = 'StreamListCollapsed';
 const SelectedStreamsKey = 'SelectedStreams';
 const StreamChatKey = 'StreamChat';
+const SpotlightStreamIdKey = 'SpotlightStreamId';
 
 const getFromStorage = <T,>(key: string): T | undefined => {
     const value = window.localStorage.getItem(key);
@@ -22,4 +23,7 @@ export const StorageModule = {
 
     GetStreamChat: () => getFromStorage<StreamAndUserInfo>(StreamChatKey),
     SetStreamChat: (stream: StreamAndUserInfo | undefined) => setToStorage(StreamChatKey, stream),
+
+    GetSpotlightStreamId: () => getFromStorage<string>(SpotlightStreamIdKey),
+    SetSpotlightStreamId: (id: string | undefined) => setToStorage(SpotlightStreamIdKey, id),
 };
