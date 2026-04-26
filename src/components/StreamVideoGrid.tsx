@@ -40,28 +40,44 @@ export const StreamVideoGrid = (props: StreamVideoGridProps) => {
     if (useSpotlight && spotlightStream) {
         const n = streamCount - 1;
 
-        // Bottom-strip layout: thumbnails in 1 row across the bottom.
-        // Cap thumbnail thickness at 25% of cross dim to avoid degenerate sizes for small n.
-        const bottomThumbH = Math.min(width / n / aspectRatio, height * 0.25);
-        const bottomThumbW = bottomThumbH * aspectRatio;
-        const bottomSpotW = Math.min(width, (height - bottomThumbH) * aspectRatio);
+        // Orientation: use the strip that doesn't waste the spotlight's natural fit.
+        // - For grids narrower than 16:9 (gridAspect <= streamAspect), the spotlight
+        //   naturally fills width with leftover height — put thumbs at the bottom.
+        // - For wider grids, the spotlight naturally fills height with leftover width
+        //   — put thumbs on the right.
+        const useBottom = width / height <= aspectRatio;
 
-        // Right-strip layout: thumbnails in 1 column down the right edge.
-        const rightThumbW = Math.min((height / n) * aspectRatio, width * 0.25);
-        const rightThumbH = rightThumbW / aspectRatio;
-        const rightSpotW = Math.min(width - rightThumbW, height * aspectRatio);
+        // Minimum thumb height (px) for visibility. Small so the spotlight wins as much
+        // of the area as possible; thumbs only grow above this when the grid actually
+        // has the empty space to give.
+        const minThumbH = 50;
 
-        // Pick the orientation that maximizes the spotlight stream's size.
-        const useBottom = bottomSpotW >= rightSpotW;
+        let thumbW: number;
+        let thumbH: number;
 
-        const spotW = useBottom ? bottomSpotW : rightSpotW;
-        const spotH = spotW / aspectRatio;
-        const thumbW = useBottom ? bottomThumbW : rightThumbW;
-        const thumbH = useBottom ? bottomThumbH : rightThumbH;
+        if (useBottom) {
+            // Strip thickness ideally equals the height that the spotlight can't use
+            // while filling width (the natural leftover). Capped by what fits n thumbs
+            // in a single row, floored by minimum visibility.
+            const naturalH = Math.max(0, height - width / aspectRatio);
+            const fitH = width / (n * aspectRatio);
+            thumbH = Math.max(Math.min(naturalH, fitH), Math.min(minThumbH, fitH));
+            thumbW = thumbH * aspectRatio;
+        } else {
+            const naturalW = Math.max(0, width - height * aspectRatio);
+            const fitW = (height / n) * aspectRatio;
+            const minThumbW = minThumbH * aspectRatio;
+            thumbW = Math.max(Math.min(naturalW, fitW), Math.min(minThumbW, fitW));
+            thumbH = thumbW / aspectRatio;
+        }
 
-        // Center spotlight in its available area.
+        // Spotlight fills the area not taken by the thumb strip, preserving 16:9.
         const spotAvailW = useBottom ? width : width - thumbW;
         const spotAvailH = useBottom ? height - thumbH : height;
+        const spotW = Math.min(spotAvailW, spotAvailH * aspectRatio);
+        const spotH = spotW / aspectRatio;
+
+        // Center spotlight in its available area.
         layouts.set(spotlightStream.user_id, {
             width: spotW,
             height: spotH,
