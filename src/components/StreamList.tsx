@@ -1,7 +1,6 @@
 import {
     Avatar,
     Box,
-    IconButton,
     List,
     ListItem,
     ListItemAvatar,
@@ -13,8 +12,8 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
-import { green, grey, purple, red } from '@mui/material/colors';
-import { ChatBubble, Circle, Highlight } from '@mui/icons-material';
+import { green, purple, red } from '@mui/material/colors';
+import { Circle } from '@mui/icons-material';
 import { StreamAndUserInfo } from '../services/twitch';
 import { TitleBar } from './TitleBar';
 import { useState } from 'react';
@@ -25,11 +24,7 @@ import { StorageModule } from '../services/storage';
 export interface StreamListProps {
     followedStreams: StreamAndUserInfo[];
     selectedStreams: StreamAndUserInfo[];
-    spotlightStreamId: string | undefined;
-    streamChat: StreamAndUserInfo | undefined;
     toggleStreamSelect(stream: StreamAndUserInfo): void;
-    toggleStreamSpotlight(stream: StreamAndUserInfo): void;
-    toggleStreamChat(stream: StreamAndUserInfo): void;
 }
 
 export const TitleBarHeight = '64px';
@@ -39,50 +34,6 @@ const AvatarSize = '36px';
 const JustifySpaceBetweenSx: SxProps<Theme> = {
     display: 'flex',
     justifyContent: 'space-between',
-};
-
-// The action buttons are sized explicitly rather than by their padding so that both are
-// identical squares regardless of the size of the icon each one holds.
-const ActionButtonSize = '28px';
-const ActionsCornerRadius = '6px';
-const ActionsBottomMargin = '4px';
-// Space held open on the right of every expanded entry for its action buttons, so stream text
-// and viewer counts stay aligned across entries regardless of which buttons an entry shows.
-const OneActionWidth = '36px';
-const TwoActionsWidth = '64px';
-
-interface StreamActionButtonProps {
-    onClick(): void;
-    tooltipText: string;
-    icon: React.ReactNode;
-    isActiveOnThisStream: boolean;
-}
-
-const StreamActionButton = (props: StreamActionButtonProps) => {
-    const { onClick, tooltipText, icon, isActiveOnThisStream } = props;
-    return (
-        <Tooltip title={tooltipText} placement='top' arrow disableInteractive>
-            <IconButton
-                onClick={onClick}
-                sx={{
-                    width: ActionButtonSize,
-                    height: ActionButtonSize,
-                    padding: 0,
-                    flexShrink: 0,
-                    borderRadius: 0,
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    color: isActiveOnThisStream ? green[400] : grey[500],
-                    // A button that is already on stays green on hover; the rest brighten to white.
-                    '&:hover': {
-                        background: 'rgba(0, 0, 0, 0.5)',
-                        ...(!isActiveOnThisStream && { color: 'common.white' }),
-                    },
-                }}
-            >
-                {icon}
-            </IconButton>
-        </Tooltip>
-    );
 };
 
 export const StreamList = (props: StreamListProps) => {
@@ -97,73 +48,12 @@ export const StreamList = (props: StreamListProps) => {
         });
     };
 
-    const {
-        followedStreams,
-        selectedStreams,
-        spotlightStreamId,
-        streamChat,
-        toggleStreamSelect,
-        toggleStreamSpotlight,
-        toggleStreamChat,
-    } = props;
+    const { followedStreams, selectedStreams, toggleStreamSelect } = props;
     const leftRightPadding = collapsed ? CollapsedLeftRightPadding : ExpandedLeftRightPadding;
 
-    // Spotlight is meaningless with fewer than two streams being watched.
-    const canSpotlight = selectedStreams.length >= 2;
-    const spotlightActive =
-        canSpotlight && selectedStreams.some((s) => s.user_id === spotlightStreamId);
-    const chatActive = !!streamChat;
-    const actionsWidth = canSpotlight ? TwoActionsWidth : OneActionWidth;
-
     const StreamEntry = (stream: StreamAndUserInfo) => {
-        const { user_id, user_name, game_name, title, viewer_count, userInfo } = stream;
+        const { user_name, game_name, title, viewer_count, userInfo } = stream;
         const selected = !!selectedStreams.find((ss) => ss.user_name === user_name);
-        const isSpotlit = spotlightActive && spotlightStreamId === user_id;
-        const isChatOpen = streamChat?.user_id === user_id;
-
-        const spotlightTooltip = isSpotlit
-            ? 'Turn off Spotlight'
-            : spotlightActive
-            ? 'Switch Spotlight'
-            : 'Turn on Spotlight';
-
-        const chatTooltip = isChatOpen ? 'Hide chat' : chatActive ? 'Switch chat' : 'Show chat';
-
-        // Actions only apply to streams being watched, and there is no room for them while the
-        // list is collapsed down to avatars. They are pinned flush to the entry's bottom right
-        // corner over the space it holds open for them, so they never displace stream text.
-        const actions = !collapsed && selected && (
-            <Box
-                sx={{
-                    position: 'absolute',
-                    right: 0,
-                    bottom: ActionsBottomMargin,
-                    display: 'flex',
-                    alignItems: 'center',
-                    // Round the block's outer left corners — whichever button leads it — so it
-                    // reads as a tab tucked into the corner rather than a hard-edged bar.
-                    '& > :first-of-type': {
-                        borderTopLeftRadius: ActionsCornerRadius,
-                        borderBottomLeftRadius: ActionsCornerRadius,
-                    },
-                }}
-            >
-                {canSpotlight && (
-                    <StreamActionButton
-                        onClick={() => toggleStreamSpotlight(stream)}
-                        tooltipText={spotlightTooltip}
-                        isActiveOnThisStream={isSpotlit}
-                        icon={<Highlight sx={{ fontSize: 20, transform: 'rotate(135deg)' }} />}
-                    />
-                )}
-                <StreamActionButton
-                    onClick={() => toggleStreamChat(stream)}
-                    tooltipText={chatTooltip}
-                    isActiveOnThisStream={isChatOpen}
-                    icon={<ChatBubble sx={{ fontSize: 16, transform: 'scaleX(-1)' }} />}
-                />
-            </Box>
-        );
 
         const StreamEntryHeader = () => {
             const formattedViewerCount = viewer_count.toLocaleString(undefined, {
@@ -222,17 +112,11 @@ export const StreamList = (props: StreamListProps) => {
                                 primary={<StreamEntryHeader />}
                                 primaryTypographyProps={{ sx: JustifySpaceBetweenSx }}
                                 secondary={<StreamEntryDescription />}
-                                // Only the description shares a line with the action buttons, so
-                                // it alone holds space open for them — the viewer count above
-                                // keeps the full width and stays flush with the entry's gutter.
-                                secondaryTypographyProps={{
-                                    sx: { ...JustifySpaceBetweenSx, paddingRight: actionsWidth },
-                                }}
+                                secondaryTypographyProps={{ sx: JustifySpaceBetweenSx }}
                             />
                         )}
                     </ListItemButton>
                 </Tooltip>
-                {actions}
             </ListItem>
         );
     };
