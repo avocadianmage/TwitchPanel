@@ -7,9 +7,6 @@ import { StreamPlayer } from './StreamPlayer';
 interface StreamVideoGridProps {
     selectedStreams: StreamAndUserInfo[];
     spotlightStreamId: string | undefined;
-    streamChat: StreamAndUserInfo | undefined;
-    toggleStreamSpotlight(stream: StreamAndUserInfo): void;
-    toggleStreamChat(stream: StreamAndUserInfo): void;
 }
 
 interface Layout {
@@ -20,14 +17,7 @@ interface Layout {
 }
 
 export const StreamVideoGrid = (props: StreamVideoGridProps) => {
-    const {
-        selectedStreams,
-        spotlightStreamId,
-        streamChat,
-        toggleStreamSpotlight,
-        toggleStreamChat,
-    } = props;
-    const chatActive = !!streamChat;
+    const { selectedStreams, spotlightStreamId } = props;
 
     const divRef = useRef<HTMLDivElement>(null);
     const { width, height } = useRect(divRef);
@@ -157,13 +147,6 @@ export const StreamVideoGrid = (props: StreamVideoGridProps) => {
                         height={layout.height}
                         left={layout.left}
                         top={layout.top}
-                        isSpotlit={useSpotlight && s.user_id === spotlightStreamId}
-                        spotlightActive={useSpotlight}
-                        canSpotlight={canSpotlight}
-                        isChatOpen={streamChat?.user_id === s.user_id}
-                        chatActive={chatActive}
-                        onToggleSpotlight={() => toggleStreamSpotlight(s)}
-                        onToggleChat={() => toggleStreamChat(s)}
                     />
                 );
             })}
