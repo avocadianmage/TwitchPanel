@@ -165,15 +165,14 @@ const App = () => {
                 <StreamList
                     followedStreams={followedStreams}
                     selectedStreams={selectedStreams}
-                    spotlightStreamId={spotlightStreamId}
-                    streamChat={streamChat}
                     toggleStreamSelect={toggleStreamSelect}
-                    toggleStreamSpotlight={toggleStreamSpotlight}
-                    toggleStreamChat={toggleStreamChat}
                 />
                 <StreamVideoGrid
                     selectedStreams={selectedStreams}
                     spotlightStreamId={spotlightStreamId}
+                    streamChat={streamChat}
+                    toggleStreamSpotlight={toggleStreamSpotlight}
+                    toggleStreamChat={toggleStreamChat}
                 />
                 {streamChat && (
                     <StreamChat
