@@ -1,17 +1,26 @@
-import { StreamAndUserInfo } from './twitch';
+import { GameInfo, StreamAndUserInfo } from './twitch';
 
 const StreamListCollapsedKey = 'StreamListCollapsed';
 const SelectedStreamsKey = 'SelectedStreams';
 const StreamChatKey = 'StreamChat';
 const SpotlightStreamIdKey = 'SpotlightStreamId';
+const TrackedGamesKey = 'TrackedGames';
 
 const getFromStorage = <T,>(key: string): T | undefined => {
     const value = window.localStorage.getItem(key);
-    return value !== null ? JSON.parse(value) : undefined;
+    if (value === null) return undefined;
+    try {
+        return JSON.parse(value);
+    } catch {
+        // Tolerate corrupt values (e.g. the literal 'undefined' written by older versions).
+        return undefined;
+    }
 };
 
 const setToStorage = <T,>(key: string, value: T): void => {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    // JSON.stringify(undefined) is not valid JSON and would break the next JSON.parse.
+    if (value === undefined) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, JSON.stringify(value));
 };
 
 export const StorageModule = {
@@ -26,4 +35,7 @@ export const StorageModule = {
 
     GetSpotlightStreamId: () => getFromStorage<string>(SpotlightStreamIdKey),
     SetSpotlightStreamId: (id: string | undefined) => setToStorage(SpotlightStreamIdKey, id),
+
+    GetTrackedGames: () => getFromStorage<GameInfo[]>(TrackedGamesKey),
+    SetTrackedGames: (games: GameInfo[]) => setToStorage(TrackedGamesKey, games),
 };

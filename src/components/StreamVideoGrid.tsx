@@ -151,7 +151,7 @@ export const StreamVideoGrid = (props: StreamVideoGridProps) => {
                 return (
                     <StreamPlayer
                         key={s.user_name}
-                        channelName={s.user_name}
+                        channelName={s.user_login ?? s.user_name}
                         initialMutedState={true}
                         width={layout.width}
                         height={layout.height}

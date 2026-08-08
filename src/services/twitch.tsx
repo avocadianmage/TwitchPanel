@@ -2,6 +2,8 @@ export const AspectRatio = 16 / 9;
 
 interface StreamInfo {
     user_id: string;
+    // Optional because selections persisted to storage before this field existed lack it.
+    user_login?: string;
     user_name: string;
     game_name: string;
     title: string;
@@ -15,6 +17,12 @@ export interface UserInfo {
 
 export interface StreamAndUserInfo extends StreamInfo {
     userInfo: UserInfo;
+}
+
+export interface GameInfo {
+    id: string;
+    name: string;
+    box_art_url: string;
 }
 
 interface QueryParam {
@@ -39,7 +47,7 @@ const getAccessToken = () => {
 
 const buildUrl = (base: string, params: QueryParam[]) => {
     let url = base + '?';
-    for (let param of params) {
+    for (const param of params) {
         if (param.key === '') continue;
         url += param.key;
         if (param.value !== '') url += '=' + param.value;
@@ -68,6 +76,16 @@ const getUsersData = async (streams: StreamInfo[]): Promise<UserInfo[]> => {
     const params = streams.map((s) => ({ key: 'id', value: s.user_id }));
     const getUsersResponse = await invokeTwitchApi('users', params);
     return getUsersResponse.data;
+};
+
+const enrichWithUserInfo = async (streams: StreamInfo[]): Promise<StreamAndUserInfo[]> => {
+    // Guard: getUsersData([]) queries the logged-in user instead (see getLoggedInUserInfo).
+    if (streams.length === 0) return [];
+    const users = await getUsersData(streams);
+    return streams.map((s) => ({
+        ...s,
+        userInfo: users.find((u) => u.id === s.user_id)!,
+    }));
 };
 
 const getLoggedInUserInfo = async (): Promise<UserInfo> => {
@@ -111,21 +129,45 @@ export const GetFollowedStreams = async (): Promise<StreamAndUserInfo[]> => {
             { key: 'first', value: 100 }, // This is the max value.
             { key: 'after', value: cursor },
         ]);
-        const getFollowedChannelsResponseData: StreamInfo[] = getFollowedChannelsResponse.data;
-
-        const getUsersResponseData = await getUsersData(getFollowedChannelsResponseData);
-        const streamAndUserInfos: StreamAndUserInfo[] = getFollowedChannelsResponseData.map(
-            (s) => ({
-                ...s,
-                userInfo: getUsersResponseData.find((u) => u.id === s.user_id)!,
-            })
-        );
+        const streamAndUserInfos = await enrichWithUserInfo(getFollowedChannelsResponse.data);
 
         ret = ret.concat(streamAndUserInfos);
         cursor = getFollowedChannelsResponse.pagination.cursor;
-    } while (!!cursor);
+    } while (cursor);
     return ret;
 };
+
+export const SearchCategories = async (query: string): Promise<GameInfo[]> => {
+    const response = await invokeTwitchApi('search/categories', [
+        // buildUrl does not encode values, so encode the user-provided query here.
+        { key: 'query', value: encodeURIComponent(query) },
+        { key: 'first', value: 10 },
+    ]);
+    return response.data ?? [];
+};
+
+export const GetStreamsByGame = async (gameId: string): Promise<StreamAndUserInfo[]> => {
+    const response = await invokeTwitchApi('streams', [
+        { key: 'game_id', value: gameId },
+        // Single page of the top streams by viewer count, which also keeps the user info
+        // enrichment within the 100-id cap of the users API.
+        { key: 'first', value: 100 },
+    ]);
+    return enrichWithUserInfo(response.data ?? []);
+};
+
+export const GetStreamsByUserIds = async (userIds: string[]): Promise<StreamAndUserInfo[]> => {
+    // Guard: the streams API with no user_id filter would return the top global streams.
+    if (userIds.length === 0) return [];
+    const params = userIds.map((id) => ({ key: 'user_id', value: id }));
+    const response = await invokeTwitchApi('streams', params);
+    return enrichWithUserInfo(response.data ?? []);
+};
+
+// Box art URLs may be size-templated; search results are usually already fixed-size, in which
+// case the replacements no-op.
+export const GetGameBoxArtUrl = (game: GameInfo, width: number, height: number) =>
+    game.box_art_url.replace('{width}', width.toString()).replace('{height}', height.toString());
 
 const getEmbeddingParentDomain = () => window.location.hostname;
 
