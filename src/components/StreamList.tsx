@@ -65,19 +65,33 @@ export const StreamList = (props: StreamListProps) => {
     } = props;
     const leftRightPadding = collapsed ? CollapsedLeftRightPadding : ExpandedLeftRightPadding;
 
-    // When a game is added (always appended last), scroll its new section into view, aligned
-    // to the top so its rows are visible below the header once they load.
+    // When a game is added (always appended last), scroll its new section to the top of the
+    // list viewport. At add time the section is only a header tall, so the scroll clamps at
+    // the container bottom; keep re-pinning until its streams load and it has full height.
     const scrollBoxRef = useRef<HTMLDivElement>(null);
     const prevGameCount = useRef(trackedGames.length);
+    const pendingScrollGameId = useRef<string>();
     useEffect(() => {
         if (trackedGames.length > prevGameCount.current) {
-            scrollBoxRef.current?.lastElementChild?.scrollIntoView({
-                block: 'start',
-                behavior: 'smooth',
-            });
+            pendingScrollGameId.current = trackedGames[trackedGames.length - 1].id;
         }
         prevGameCount.current = trackedGames.length;
-    }, [trackedGames]);
+
+        const pendingId = pendingScrollGameId.current;
+        if (pendingId === undefined) return;
+        const lastGame: GameInfo | undefined = trackedGames[trackedGames.length - 1];
+        if (lastGame?.id !== pendingId) {
+            // The game was removed again before its streams loaded.
+            pendingScrollGameId.current = undefined;
+            return;
+        }
+        scrollBoxRef.current?.lastElementChild?.scrollIntoView({
+            block: 'start',
+            behavior: 'smooth',
+        });
+        // Once the streams are in, the section has its final height and this scroll is final.
+        if (gameStreams[pendingId] !== undefined) pendingScrollGameId.current = undefined;
+    }, [trackedGames, gameStreams]);
 
     const subheaderBaseSx = {
         bgcolor: green[900],
