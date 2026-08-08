@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Autocomplete, Avatar, Box, InputAdornment, TextField } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { GameInfo, GetGameBoxArtUrl, SearchCategories } from '../services/twitch';
@@ -13,23 +13,41 @@ export const GameSearch = (props: GameSearchProps) => {
     const { addGame } = props;
     const [inputValue, setInputValue] = useState('');
     const [options, setOptions] = useState<GameInfo[]>([]);
+    const [searching, setSearching] = useState(false);
+
+    // Chrome fires a synthetic mousemove after keyboard-driven listbox scrolling, which
+    // would yank the highlight to whatever lands under the cursor mid-arrowing; track the
+    // pointer position so only real movement is honored.
+    const lastMousePosition = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         const query = inputValue.trim();
         if (query === '') {
             setOptions([]);
+            setSearching(false);
             return;
         }
+
+        // Clear stale results right away: Enter adds the highlighted option, which must
+        // never be a leftover from the previous query.
+        setOptions([]);
+        setSearching(true);
 
         // Debounce, and drop responses that arrive after the input has changed again.
         let active = true;
         const timeout = setTimeout(async () => {
             try {
                 const results = await SearchCategories(query);
-                if (active) setOptions(results);
+                if (active) {
+                    setOptions(results);
+                    setSearching(false);
+                }
             } catch (error) {
                 console.error(error);
-                if (active) setOptions([]);
+                if (active) {
+                    setOptions([]);
+                    setSearching(false);
+                }
             }
         }, SearchDebounceMs);
         return () => {
@@ -42,6 +60,13 @@ export const GameSearch = (props: GameSearchProps) => {
         <Autocomplete
             size='small'
             fullWidth
+            // No open/close toggle; the popup simply shows whenever there is text.
+            open={inputValue.trim() !== ''}
+            forcePopupIcon={false}
+            // Highlight the first result as results arrive, so Enter adds it directly.
+            autoHighlight
+            loading={searching}
+            loadingText='Searching...'
             // The default popup elevation matches the stream list's paper color exactly;
             // lift it so the results stand out (dark mode lightens raised surfaces).
             slotProps={{ paper: { elevation: 8 } }}
@@ -61,9 +86,22 @@ export const GameSearch = (props: GameSearchProps) => {
             renderOption={(optionProps, option) => {
                 // The props include the list key at runtime; React requires it passed
                 // directly rather than spread.
-                const { key, ...rest } = optionProps as typeof optionProps & { key: string };
+                const { key, onMouseMove, ...rest } = optionProps as typeof optionProps & {
+                    key: string;
+                };
                 return (
-                    <Box component='li' key={key} {...rest}>
+                    <Box
+                        component='li'
+                        key={key}
+                        {...rest}
+                        onMouseMove={(event) => {
+                            const { clientX, clientY } = event;
+                            const last = lastMousePosition.current;
+                            if (clientX === last.x && clientY === last.y) return;
+                            lastMousePosition.current = { x: clientX, y: clientY };
+                            onMouseMove?.(event);
+                        }}
+                    >
                         <Avatar
                             src={GetGameBoxArtUrl(option, 52, 72)}
                             variant='rounded'
