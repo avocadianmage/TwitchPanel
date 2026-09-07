@@ -21,8 +21,8 @@ interface PlayerProps {
 
 // The control buttons are sized explicitly rather than by their padding so that both are
 // identical squares regardless of the size of the icon each one holds.
-const ControlButtonSize = '28px';
-const ControlsCornerRadius = '6px';
+const ControlButtonSize = '42px';
+const ControlsCornerRadius = '9px';
 
 interface ControlButtonProps {
     onClick(): void;
@@ -115,14 +115,14 @@ export const StreamPlayer = (props: PlayerProps) => {
                         onClick={onToggleSpotlight}
                         tooltipText={spotlightTooltip}
                         isActiveOnThisStream={isSpotlit}
-                        icon={<Highlight sx={{ fontSize: 20, transform: 'rotate(135deg)' }} />}
+                        icon={<Highlight sx={{ fontSize: 30, transform: 'rotate(135deg)' }} />}
                     />
                 )}
                 <ControlButton
                     onClick={onToggleChat}
                     tooltipText={chatTooltip}
                     isActiveOnThisStream={isChatOpen}
-                    icon={<ChatBubble sx={{ fontSize: 16, transform: 'scaleX(-1)' }} />}
+                    icon={<ChatBubble sx={{ fontSize: 24, transform: 'scaleX(-1)' }} />}
                 />
             </Box>
         </Box>
