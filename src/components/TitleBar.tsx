@@ -23,7 +23,6 @@ export const TitleBar = (props: TitleBarProps) => {
                             noWrap
                             sx={{
                                 flexGrow: 1,
-                                fontFamily: 'monospace',
                                 fontWeight: 700,
                                 color: 'inherit',
                                 textDecoration: 'none',

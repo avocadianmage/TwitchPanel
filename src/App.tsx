@@ -19,6 +19,7 @@ const darkTheme = createTheme({
         mode: 'dark',
     },
     typography: {
+        fontFamily: '"Google Sans Flex", Arial, sans-serif',
         fontSize: 12,
     },
     components: {
