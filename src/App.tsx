@@ -11,7 +11,6 @@ import {
     StreamAndUserInfo,
 } from './services/twitch';
 import { StreamChat } from './components/StreamChat';
-import { GetPromisedTimeout } from './services/utilities';
 import { StorageModule } from './services/storage';
 
 const darkTheme = createTheme({
@@ -34,7 +33,6 @@ const darkTheme = createTheme({
 });
 
 const PollIntervalMs = 30000;
-let IsPollingStarted = false;
 
 const App = () => {
     const [followedStreams, setFollowedStreams] = useState<StreamAndUserInfo[]>([]);
@@ -136,112 +134,123 @@ const App = () => {
         });
     };
 
-    const pollStreams = async (isFirstPoll: boolean) => {
-        try {
-            // Fetch followed streams and every tracked game's streams in parallel.
-            const gamesToPoll = trackedGamesRef.current;
-            const [latestFollowedStreams, latestGameStreamsList] = await Promise.all([
-                GetFollowedStreams(),
-                Promise.all(gamesToPoll.map((game) => GetStreamsByGame(game.id))),
-            ]);
-            const latestGameStreams: Record<string, StreamAndUserInfo[]> = {};
-            gamesToPoll.forEach((game, i) => {
-                latestGameStreams[game.id] = latestGameStreamsList[i];
-            });
+    useEffect(() => {
+        let active = true;
+        let pollTimeout: ReturnType<typeof setTimeout> | undefined;
 
-            // Every stream seen online this poll, from any source.
-            const onlineIds = new Set(
-                [...latestFollowedStreams, ...latestGameStreamsList.flat()].map((s) => s.user_id)
-            );
+        const pollStreams = async (isFirstPoll: boolean) => {
+            try {
+                // Fetch followed streams and every tracked game's streams in parallel.
+                const gamesToPoll = trackedGamesRef.current;
+                const [latestFollowedStreams, latestGameStreamsList] = await Promise.all([
+                    GetFollowedStreams(),
+                    Promise.all(gamesToPoll.map((game) => GetStreamsByGame(game.id))),
+                ]);
+                if (!active) return;
+                const latestGameStreams: Record<string, StreamAndUserInfo[]> = {};
+                gamesToPoll.forEach((game, i) => {
+                    latestGameStreams[game.id] = latestGameStreamsList[i];
+                });
 
-            // Directly verify liveness of selected streams not seen above (e.g. selected from
-            // a game section that was since removed, or whose top streams they dropped out of).
-            const selectedCandidates = isFirstPoll
-                ? StorageModule.GetSelectedStreams() ?? []
-                : selectedStreamsRef.current;
-            const idsToVerify = [
-                ...new Set(
-                    selectedCandidates.map((s) => s.user_id).filter((id) => !onlineIds.has(id))
-                ),
-            ];
-            const checkedIds = new Set([...onlineIds, ...idsToVerify]);
-            const verifiedStreams = await GetStreamsByUserIds(idsToVerify);
-            verifiedStreams.forEach((s) => onlineIds.add(s.user_id));
+                // Every stream seen online this poll, from any source.
+                const onlineIds = new Set(
+                    [...latestFollowedStreams, ...latestGameStreamsList.flat()].map((s) => s.user_id)
+                );
 
-            setFollowedStreams(latestFollowedStreams);
-            setGameStreams((prev) => {
-                // Rebuild from the current tracked list so games removed mid-poll are
-                // dropped and results stored by a concurrent addGame are kept.
-                const value: Record<string, StreamAndUserInfo[]> = {};
-                for (const game of trackedGamesRef.current) {
-                    const streams: StreamAndUserInfo[] | undefined =
-                        latestGameStreams[game.id] ?? prev[game.id];
-                    if (streams !== undefined) value[game.id] = streams;
-                }
-                return value;
-            });
+                // Directly verify liveness of selected streams not seen above (e.g. selected from
+                // a game section that was since removed, or whose top streams they dropped out of).
+                const selectedCandidates = isFirstPoll
+                    ? StorageModule.GetSelectedStreams() ?? []
+                    : selectedStreamsRef.current;
+                const idsToVerify = [
+                    ...new Set(
+                        selectedCandidates.map((s) => s.user_id).filter((id) => !onlineIds.has(id))
+                    ),
+                ];
+                const checkedIds = new Set([...onlineIds, ...idsToVerify]);
+                const verifiedStreams = await GetStreamsByUserIds(idsToVerify);
+                if (!active) return;
+                verifiedStreams.forEach((s) => onlineIds.add(s.user_id));
 
-            if (isFirstPoll) {
-                // If the page just loaded in:
-
-                // Try to select the same streams from last time if they are still online.
-                let streamsToSelect = selectedCandidates.filter((s) => onlineIds.has(s.user_id));
-                if (streamsToSelect.length === 0 && latestFollowedStreams.length > 0) {
-                    streamsToSelect = [latestFollowedStreams[0]];
-                }
-                setSelectedStreams(streamsToSelect);
-                StorageModule.SetSelectedStreams(streamsToSelect);
-
-                // Try to open same chat from last time, if it is still online.
-                const storedStreamChat = StorageModule.GetStreamChat();
-                const chatToRestore =
-                    storedStreamChat !== undefined && onlineIds.has(storedStreamChat.user_id)
-                        ? storedStreamChat
-                        : undefined;
-                updateStreamChat(chatToRestore);
-
-                // Try to restore spotlight from last time, if its stream is still selected
-                // and there are at least 2 selected streams (spotlight is meaningless otherwise).
-                const storedSpotlightId = StorageModule.GetSpotlightStreamId();
-                const validSpotlight =
-                    storedSpotlightId !== undefined &&
-                    streamsToSelect.length >= 2 &&
-                    streamsToSelect.some((s) => s.user_id === storedSpotlightId);
-                const spotlightToSet = validSpotlight ? storedSpotlightId : undefined;
-                setSpotlightStreamId(spotlightToSet);
-                StorageModule.SetSpotlightStreamId(spotlightToSet);
-            } else {
-                // Unselect streams that were checked this poll and found offline. Streams
-                // selected while the poll was in flight (not yet checked) are kept.
-                setSelectedStreams((prev) => {
-                    const value = prev.filter(
-                        (s) => onlineIds.has(s.user_id) || !checkedIds.has(s.user_id)
-                    );
-                    StorageModule.SetSelectedStreams(value);
-                    // If the spotlit stream went offline, clear spotlight.
-                    setSpotlightStreamId((spotPrev) => {
-                        if (spotPrev === undefined) return spotPrev;
-                        const stillSelected = value.some((s) => s.user_id === spotPrev);
-                        if (stillSelected) return spotPrev;
-                        StorageModule.SetSpotlightStreamId(undefined);
-                        return undefined;
-                    });
+                setFollowedStreams(latestFollowedStreams);
+                setGameStreams((prev) => {
+                    // Rebuild from the current tracked list so games removed mid-poll are
+                    // dropped and results stored by a concurrent addGame are kept.
+                    const value: Record<string, StreamAndUserInfo[]> = {};
+                    for (const game of trackedGamesRef.current) {
+                        const streams: StreamAndUserInfo[] | undefined =
+                            latestGameStreams[game.id] ?? prev[game.id];
+                        if (streams !== undefined) value[game.id] = streams;
+                    }
                     return value;
                 });
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            GetPromisedTimeout(PollIntervalMs).then(() => pollStreams(false));
-        }
-    };
 
-    useEffect(() => {
-        if (IsPollingStarted) return;
-        IsPollingStarted = true;
+                if (isFirstPoll) {
+                    // If the page just loaded in:
+
+                    // Try to select the same streams from last time if they are still online.
+                    let streamsToSelect = selectedCandidates.filter((s) => onlineIds.has(s.user_id));
+                    if (streamsToSelect.length === 0 && latestFollowedStreams.length > 0) {
+                        streamsToSelect = [latestFollowedStreams[0]];
+                    }
+                    setSelectedStreams(streamsToSelect);
+                    StorageModule.SetSelectedStreams(streamsToSelect);
+
+                    // Try to open same chat from last time, if it is still online.
+                    const storedStreamChat = StorageModule.GetStreamChat();
+                    const chatToRestore =
+                        storedStreamChat !== undefined && onlineIds.has(storedStreamChat.user_id)
+                            ? storedStreamChat
+                            : undefined;
+                    setStreamChat(chatToRestore);
+                    StorageModule.SetStreamChat(chatToRestore);
+
+                    // Try to restore spotlight from last time, if its stream is still selected
+                    // and there are at least 2 selected streams (spotlight is meaningless otherwise).
+                    const storedSpotlightId = StorageModule.GetSpotlightStreamId();
+                    const validSpotlight =
+                        storedSpotlightId !== undefined &&
+                        streamsToSelect.length >= 2 &&
+                        streamsToSelect.some((s) => s.user_id === storedSpotlightId);
+                    const spotlightToSet = validSpotlight ? storedSpotlightId : undefined;
+                    setSpotlightStreamId(spotlightToSet);
+                    StorageModule.SetSpotlightStreamId(spotlightToSet);
+                } else {
+                    // Unselect streams that were checked this poll and found offline. Streams
+                    // selected while the poll was in flight (not yet checked) are kept.
+                    setSelectedStreams((prev) => {
+                        const value = prev.filter(
+                            (s) => onlineIds.has(s.user_id) || !checkedIds.has(s.user_id)
+                        );
+                        StorageModule.SetSelectedStreams(value);
+                        // If the spotlit stream went offline, clear spotlight.
+                        setSpotlightStreamId((spotPrev) => {
+                            if (spotPrev === undefined) return spotPrev;
+                            const stillSelected = value.some((s) => s.user_id === spotPrev);
+                            if (stillSelected) return spotPrev;
+                            StorageModule.SetSpotlightStreamId(undefined);
+                            return undefined;
+                        });
+                        return value;
+                    });
+                }
+            } catch (error) {
+                if (active) console.error(error);
+            } finally {
+                if (active) {
+                    pollTimeout = setTimeout(() => void pollStreams(false), PollIntervalMs);
+                }
+            }
+        };
 
         Authenticate();
-        pollStreams(true);
+        void pollStreams(true);
+
+        return () => {
+            // Ignore in-flight results and stop scheduling polls after this effect ends.
+            active = false;
+            clearTimeout(pollTimeout);
+        };
     }, []);
 
     return (
